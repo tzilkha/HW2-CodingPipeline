@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photos</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.1/css/bulma.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.8.0/dropzone.css" integrity="sha512-7uSoC3grlnRktCWoO4LjHMjotq8gf9XDFQerPuaph+cqR7JC9XKGdvN+UwZMC14aAaBDItdRj3DcSDs4kMWUgg==" crossorigin="anonymous" />
+
+    <style>
+      <!-- Your styles here -->
+    </style>
+  </head>
+      <script>
+          function sub() {
+            if (document.getElementById("myform").myFile.files.length == 0){
+                alert("Choose a file.");
+                return 1;
+            }
+            file = document.getElementById("myform").myFile.files[0];
+
+            let config = {
+                headers: {
+                    'Content-Type': file.type,
+                    "x-api-key": "0QoFgvfPmv5ikBbrxhiBfaF5phzIeuyB4gpAPjlk"
+                }
+            };
+
+            keys = document.getElementById("myform").fname.value;
+            if (keys != "") {
+                config['headers']['x-amz-meta-customLabels'] = keys;
+            }
+
+            url = 'https://irp21zzocd.execute-api.us-east-1.amazonaws.com/dev/upload/hw2-s3-bucket/' + file.name
+            axios.put(url, file, config).then(response=>{
+                 console.log(response.data)
+                alert("Image uploaded.");
+            });
+        };
+
+        function search() {
+
+            const parent = document.getElementById('results')
+            while (parent.firstChild) {
+                parent.firstChild.remove()
+            }
+
+            lookup = document.getElementById("mysearch").search.value;
+            if (lookup == "") {
+                alert("Search is empty.");
+                return 1;
+            }
+
+            url = 'https://irp21zzocd.execute-api.us-east-1.amazonaws.com/dev/search?q=' + lookup
+            console.log(url)
+            let config = {
+                headers: {
+                    "x-api-key": "0QoFgvfPmv5ikBbrxhiBfaF5phzIeuyB4gpAPjlk"
+                }
+            };
+
+            console.log(document.getElementById('results'));
+
+            hits = [];
+            axios.get(url, config).then(response => {
+                hits = response.data;
+
+                if (hits.length == 0) {
+                    alert("No matches found");
+                    return 1;
+                }
+
+                for (var i = 0; i < hits.length; i++) {
+                    console.log(hits[i]);
+                    var img = new Image();
+                    img.src = hits[i];
+                    document.getElementById('results').appendChild(img);
+
+                }
+            });
+        };
+
+      
+      // Code inspired by https://www.google.com/intl/en/chrome/demos/speech.html
+      var final_transcript = '';
+      var recognizing = false;
+      
+      var recognition = new webkitSpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      
+      recognition.onerror = function(event){
+          if (event.error == 'no-speech') {
+            start_img.src = '/intl/en/chrome/assets/common/images/content/mic.gif';
+            showInfo('info_no_speech');
+            ignore_onend = true;
+          }
+          if (event.error == 'audio-capture') {
+            start_img.src = '/intl/en/chrome/assets/common/images/content/mic.gif';
+            showInfo('info_no_microphone');
+            ignore_onend = true;
+          }
+          if (event.error == 'not-allowed') {
+            if (event.timeStamp - start_timestamp < 100) {
+              showInfo('info_blocked');
+            } else {
+              showInfo('info_denied');
+            }
+            ignore_onend = true;
+          }
+          off();
+        };
+      
+      function showInfo(msg){
+          document.getElementById("recstatus").innerHTML = msg;
+      }
+      
+      function on() {
+              document.getElementById('rec').disabled = true;
+              document.getElementById('stop').disabled = false;
+              
+              final_transcript = ''
+              recognizing = true;
+              showInfo('-Speak Now-');
+              recognition.start()
+              
+              
+
+        }
+      function off() {
+              document.getElementById('rec').disabled = false;
+              document.getElementById('stop').disabled = true;
+              recognition.stop();
+              showInfo('');
+    
+        }
+      recognition.onresult = function(event){
+          for (var i = event.resultIndex; i < event.results.length; ++i) {
+              if (event.results[i].isFinal) {
+                  final_transcript += event.results[i][0].transcript;
+            }
+          }
+          document.getElementById('search').value = final_transcript;
+      }
+    </script>
+
+
+    <body>
+    <div>
+        <form action="JavaScript:sub()", id="myform">
+            <input type="file" id="myFile" name="filename">
+            <br>
+            <label for="fname">Tags separated by commas:</label>
+            <input type="text" id="fname" name="fname"><br><br>
+            <input type="submit" value="Submit">
+        </form>
+        <br>
+        <br>
+        Record a search:
+        <div id="recstatus">
+        </div>
+        <br>
+        <button type="button" id="rec" onclick="JavaScript:on()">Record</button>
+        <button type="button" id="stop" onclick="JavaScript:off()" disabled="true">Stop</button>
+
+        <br>
+        <br>
+        Search for pictures:
+        <form id="mysearch" action="JavaScript:search()">
+            <input type="text" placeholder="Search.." name="search", id="search">
+            <button type="submit"><i class="fa fa-search"></i></button>
+        </form>
+
+    </div>
+    <div id="results">
+
+    </div>
+    <footer>
+      <script src="./apiGateway-js-sdk/apigClient.js"></script>
+      <script src="./apiGateway-js-sdk/lib/axios/dist/axios.standalone.js"></script>
+      <script src="./apiGateway-js-sdk/lib/CryptoJS/rollups/hmac-sha256.js"></script>
+      <script src="./apiGateway-js-sdk/lib/CryptoJS/rollups/sha256.js"></script>
+      <script src="./apiGateway-js-sdk/lib/CryptoJS/components/hmac.js"></script>
+      <script src="./apiGateway-js-sdk/lib/CryptoJS/components/enc-base64.js"></script>
+      <script src="./apiGateway-js-sdk/lib/url-template/url-template.js"></script>
+      <script src="./apiGateway-js-sdk/lib/apiGatewayCore/sigV4Client.js"></script>
+      <script src="./apiGateway-js-sdk/lib/apiGatewayCore/apiGatewayClient.js"></script>
+      <script src="./apiGateway-js-sdk/lib/apiGatewayCore/simpleHttpClient.js"></script>
+      <script src="./apiGateway-js-sdk/lib/apiGatewayCore/utils.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.8.0/min/dropzone.min.js" integrity="sha512-OrzfT4DZdVn0D1+jawpCOnNLYTdv2KJKeuPgjSn5vjD2ew59jXgSDItHrC4WYLfqxxONojMKc9Rl6s12GZKkiw==" crossorigin="anonymous"></script>
+      <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+      <script src="https://kit.fontawesome.com/06dfa103e1.js" crossorigin="anonymous"></script>
+
+    </footer>
+
+
+  </body>
+</html>
